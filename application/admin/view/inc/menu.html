@@ -1,0 +1,23 @@
+<div class="layui-side layui-side-menu">
+    <div class="layui-side-scroll">
+        <ul class="layui-nav layui-nav-tree">
+            {if !empty($menu)}
+            {foreach name="menu" item="vo"}
+            <li class="layui-nav-item">
+                <a href="{$vo.href}">
+                    <i class="{$vo.icon} fa-fw" aria-hidden="true"></i>
+                    <cite>{$vo.node_name}</cite>
+                </a>
+                <dl>
+                    {if !empty($vo['child'])}
+                    {foreach name="$vo['child']" item="v"}
+                    <dd><a href="{$v.href}"><cite>{$v.node_name}</cite></a></dd>
+                    {/foreach}
+                    {/if}
+                </dl>
+            </li>
+            {/foreach}
+            {/if}
+        </ul>
+    </div>
+</div>

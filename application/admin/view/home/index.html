@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    {include file="inc/header" /}
+</head>
+<body>
+<div class="layui-layout-admin">
+    <!--顶部-->
+    {include file="inc/toper" /}
+    <!--左侧-->
+    {include file="inc/menu" /}
+    <!--右侧-->
+    <div class="layui-body" style="display: flex;justify-content: center;align-items: center;margin-bottom: 200px">
+        <h1>你好！{$Request.session.username}，欢迎登录系统</h1>
+    </div>
+</div>
+{include file="inc/script" /}
+</body>
+</html>

@@ -1,0 +1,73 @@
+<div class="layui-header">
+    <div class="layui-logo" id="logoClick" style="cursor: pointer">控制面板</div>
+    <ul class="layui-nav layui-layout-left" style="padding: 0">
+        <li class="layui-nav-item">
+            <a href="javascript:;" style="font-size: 16px">
+                {$node_name}
+            </a>
+        </li>
+    </ul>
+
+    {if ($Request.controller) !== 'Home' && ($Request.action) =='index'}
+    <ul class="layui-nav layui-layout-right">
+        <li class="layui-nav-item layui-hide-xs">
+            <div class="layui-admin-search">
+                <input class="layui-admin-search-input" type="text" autocomplete="off"
+                       id="searchText" placeholder="搜索编号/SN/标题">
+                <button class="layui-btn layui-btn-md" id="searchBtn" style="line-height: 20px"><i
+                        class="layui-icon layui-icon-search"></i></button>
+            </div>
+        </li>
+        <li class="layui-nav-item layui-hide-xs" style="margin-left: 15px">
+            <button class="layui-btn layui-btn-md" id="addBtn" style="line-height: 20px"><i
+                    class="layui-icon layui-icon-add-1"></i><span>我要添加</span></button>
+        </li>
+    </ul>
+    {else}
+    <ul class="layui-nav layui-layout-right">
+        <li class="layui-nav-item layui-hide-xs">
+            <a href="javascript:;" id="safeBtn">安全</a>
+        </li>
+        <li class="layui-nav-item layui-hide-xs">
+            <a href="javascript:;" id="loginOut">注销</a>
+        </li>
+    </ul>
+    {/if}
+</div>
+<script>
+    layui.use(['form', 'table', 'util', 'ajax'], function () {
+        var $ = layui.$,
+            common = layui.ajax;
+
+        $('#logoClick').on('click', function () {
+            window.location.href = '/admin/Home/index'
+        });
+        $('#loginOut').on('click', function () {
+            window.location.href = '/myadmin'
+        });
+        $('#safeBtn').on('click', function () {
+            layer.prompt({title: '输入原始密码，并确认', formType: 1}, function (pass, index) {
+                layer.close(index);
+                layer.prompt({title: '输入新密码，并确认', formType: 1}, function (text, index) {
+                    layer.close(index);
+                    common.ajax({
+                        url: "/admin/home/ckpwd",
+                        type: "POST",
+                        dataType: "json",
+                        data: {password: pass, passwd: text},
+                        success: function (res) {
+                            if (res.code === 1) {
+                                layer.msg(res.msg);
+                                setTimeout(function () {
+                                    window.location.href = '/myadmin'
+                                }, 1500);
+                            } else {
+                                layer.msg(res.msg);
+                            }
+                        }
+                    });
+                });
+            });
+        });
+    });
+</script>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    {include file="inc/header" /}
+</head>
+<body>
+<div class="layui-layout-admin">
+    <!--顶部-->
+    {include file="inc/toper" /}
+    <!--左侧-->
+    {include file="inc/menu" /}
+    <!--右侧-->
+    <div class="layui-body">
+        <div class="layui-fluid">
+            <div class="layui-row layui-col-space15">
+                <div class="layui-col-md15">
+                    <div class="layui-card">
+                        <div class="layui-mytool">
+                            <form class="layui-form">
+                                <div class="layui-input-inline" style="width: 120px">
+                                    <!--<select name="status" lay-filter="status">-->
+                                        <!--<option value="">请选择</option>-->
+                                        <!--<option value="1">正常</option>-->
+                                        <!--<option value="-1">已停止</option>-->
+                                        <!--<option value="-3">已删除</option>-->
+                                    <!--</select>-->
+                                </div>
+                            </form>
+                        </div>
+                        <div class="layui-mytable">
+                            <table class="layui-table layui-form" id="tree-table" lay-size="sm"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{include file="inc/script" /}
+
+<script>
+    layui.use(['treeTable', 'form', 'table', 'ajax'], function () {
+        var table = layui.table,
+            $ = layui.$,
+            form = layui.form,
+            common = layui.ajax,
+            treeTable = layui.treeTable;
+        var ctx = '/{$Request.module}/{$Request.controller}/';
+        var re = treeTable.render({
+            elem: '#tree-table',
+            url: ctx + 'getall', //数据接口
+            icon_key: 'node_name',
+            is_checkbox: false,
+            primary_key: 'id',
+            parent_key: 'typeid',
+            hide_class: 'layui-hide',
+            // checked: {
+            //     key: 'id',
+            //     data: [0,1,4,10,11,5,2,6,7,3,8,9],
+            // },
+            end: function (e) {
+                form.render();
+            },
+            cols: [
+                {key: 'node_name', title: '功能名称'}
+                , {key: 'module_name', title: '模块名称', align: 'center'}
+                , {key: 'control_name', title: '控制器名称', align: 'center'}
+                , {key: 'action_name', title: '方法名称', align: 'center'}
+                , {key: 'icon', title: '图标Icon', align: 'center'}
+                , {
+                    key: 'is_menu', title: '菜单显示', align: 'center',
+                    template: function (item) {
+                        if(item.is_menu ===1){
+                            return '隐藏';
+                        }else {
+                            return '<span style="color: #000;">显示</span>';
+                        }
+                    }
+                }
+                , {
+                    title: '操作',
+                    align: 'center',
+                    template: function (item) {
+                        return '<a lay-filter="edit">编辑</a> | <a lay-filter="del">删除</a>';
+                    }
+                }
+            ]
+        });
+        // 监听自定义 编辑
+        treeTable.on('tree(edit)',function(data){
+            layer.open({
+                type: 2,
+                title: '编辑',
+                shadeClose: true,
+                shade: 0.6,
+                area: ['50%', '90%'],
+                content: ctx + 'read?sn=' + data.item.sn, //iframe的url
+                end: function (index, layero) {
+                    treeTable.render(re);
+                    return false;
+                }
+            });
+        });
+        // 监听自定义 删除
+        treeTable.on('tree(del)',function(data){
+            layer.confirm('确定删除？', {title: '提示'}, function (index) {
+                common.ajax({
+                    url: ctx + "delete",
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        id: data.item.id
+                    },
+                    success: function (res) {
+                        if (res.code === 0) {
+                            layer.msg(res.msg);
+                            treeTable.render(re);
+                        } else {
+                            layer.msg(res.msg);
+                        }
+                    }
+                });
+                layer.close(index);
+            });
+        });
+        // 添加功能
+        $('#addBtn').on('click', function () {
+            layer.open({
+                type: 2,
+                title: '添加',
+                shadeClose: true,
+                shade: 0.6,
+                area: ['50%', '90%'],
+                content: ctx + 'create', //iframe的url
+                end: function (index, layero) {
+                    tableIns.reload();
+                    return false;
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

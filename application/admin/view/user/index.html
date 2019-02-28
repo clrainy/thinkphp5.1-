@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    {include file="inc/header" /}
+</head>
+<body>
+<div class="layui-layout-admin">
+    <!--顶部-->
+    {include file="inc/toper" /}
+    <!--左侧-->
+    {include file="inc/menu" /}
+    <!--右侧-->
+    <div class="layui-body">
+        <div class="layui-fluid">
+            <div class="layui-row layui-col-space15">
+                <div class="layui-col-md15">
+                    <div class="layui-card">
+                        <div class="layui-mytool">
+                            <form class="layui-form">
+                                <div class="layui-input-inline" style="width: 120px">
+                                    <select name="status" lay-filter="status">
+                                        <option value="">请选择</option>
+                                        <option value="1">正常</option>
+                                        <option value="-1">已停止</option>
+                                        <option value="-3">已删除</option>
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="layui-mytable">
+                            <table id="myTable" lay-filter="mytable"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{include file="inc/script" /}
+
+<script type="text/html" id="actionBar">
+    <!--<a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="detail">查看</a>-->
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<script>
+    layui.use(['form', 'table', 'util', 'ajax'], function () {
+        var table = layui.table,
+            $ = layui.$,
+            form = layui.form,
+            common = layui.ajax,
+            util = layui.util;
+        var ctx = '/{$Request.module}/{$Request.controller}/';
+        //第一个实例
+        var tableIns = table.render({
+            elem: '#myTable'
+            , height: 'full-202'
+            , url: ctx + 'getall' //数据接口
+            , page: true //开启分页
+            // , toolbar: '#toolBar'
+            , id: 'tab1'
+            , cols: [[ //表头
+                {type: 'checkbox', fixed: 'left'}
+                , {field: 'sn', title: '编号', width: 160}
+                , {field: 'username', title: '用户名', align: 'center'}
+                , {field: 'real_name', title: '真实姓名', align: 'center'}
+                , {field: 'role_id', title: '角色', align: 'center'}
+                , {field: 'login_num', title: '登录次数', align: 'center'}
+                , {
+                    field: 'last_login_time', title: '上次登录时间', align: 'center', templet: function (d) {
+                        return util.toDateString(d.last_login_time * 1000, 'yyyy-MM-dd HH:mm:ss')
+                    }
+                }
+                , {
+                    field: 'status', title: '状态', width: 120, align: 'center', templet: function (d) {
+                        if (d.status !== 1) {
+                            return '<span style="color: #f51833;">已停用</span>';
+                        } else {
+                            return '<span style="color: #2ecd20;">正常</span>';
+                        }
+                    }
+                }
+                , {fixed: 'right', title: '操作', width: 180, align: 'center', toolbar: '#actionBar'}
+            ]]
+            , done: function (res, curr, count) {
+                if (res.code === 10025) {
+                    layer.open({
+                        title: '提示',
+                        content: res.msg,
+                        end: function (index, layero) {
+                            layer.close(index);
+                            window.location.href = res.data;
+                            return false;
+                        }
+                    })
+                } else {
+                    layer.msg(res.msg);
+                }
+            }
+        });
+
+        //监听工具条
+        table.on('tool(mytable)', function (obj) {
+            var data = obj.data;
+            switch (obj.event) {
+                case 'detail':
+                    layer.msg('ID：' + data.id + ' 的查看操作');
+                    break;
+                case 'del':
+                    if (data.id === 1) {
+                        layer.msg('管理员不能删除！');
+                    } else {
+                        layer.confirm('确定删除？', {title: '提示'}, function (index) {
+                            common.ajax({
+                                url: ctx + "delete",
+                                type: "POST",
+                                dataType: "json",
+                                data: {
+                                    sn: data.sn
+                                },
+                                success: function (res) {
+                                    if (res.code === 0) {
+                                        layer.msg(res.msg);
+                                        obj.del();
+                                    } else {
+                                        layer.msg(res.msg);
+                                    }
+                                }
+                            });
+                            layer.close(index);
+                        });
+                    }
+                    break;
+                case 'edit':
+                    // layer.alert('编辑行：<br>' + JSON.stringify(data));
+                    layer.open({
+                        type: 2,
+                        title: '编辑',
+                        shadeClose: true,
+                        shade: 0.6,
+                        area: ['50%', '90%'],
+                        content: ctx + 'read?sn=' + data.sn, //iframe的url
+                        end: function (index, layero) {
+                            tableIns.reload();
+                            return false;
+                        }
+                    });
+                    break;
+            }
+        });
+
+        //表格顶部自定义工具条功能
+        form.on('select(status)', function (data) {
+            tableIns.reload({
+                where: {
+                    searchStatus: data.value
+                }
+                , page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            });
+        });
+        //搜索功能
+        $('#searchBtn').on('click', function () {
+            tableIns.reload({
+                where: {
+                    searchText: $('#searchText').val()
+                }
+                , page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            });
+        });
+
+        // 添加功能
+        $('#addBtn').on('click', function () {
+            layer.open({
+                type: 2,
+                title: '添加',
+                shadeClose: true,
+                shade: 0.6,
+                area: ['50%', '90%'],
+                content: ctx + 'create', //iframe的url
+                end: function (index, layero) {
+                    tableIns.reload();
+                    return false;
+                }
+            });
+        });
+
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    {include file="inc/header" /}
+    <style>
+        html, body {
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-layout-admin">
+
+    <div class="layui-fluid">
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md15">
+                <br>
+                <form class="layui-form layui-form-pane" action="">
+                    <input type="hidden" name="sn" class="layui-input" value="{$list.sn}">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">功能名称</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="node_name" placeholder="请输入功能名称" autocomplete="off" value="{$list.node_name}"
+                                   class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">模块名称</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="module_name" placeholder="请输入模块名称" autocomplete="off" value="{$list.module_name}"
+                                   class="layui-input">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">控制器名称</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="control_name" placeholder="请输入控制器名称" autocomplete="off" value="{$list.control_name}"
+                                   class="layui-input">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">方法名称</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="action_name" placeholder="请输入方法名称" autocomplete="off" value="{$list.action_name}"
+                                   class="layui-input">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">图标Icon</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="icon" placeholder="请输入图标Icon" autocomplete="off" value="{$list.icon}"
+                                   class="layui-input">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">父级名称</label>
+                        <div class="layui-input-block">
+                            <input type="hidden" name="typeid" class="layui-input" id="typeId" value="{$list.typeid}">
+                            <input type="text" placeholder="请选择父级名称，不选默认为根节点" autocomplete="off" class="layui-input"
+                                   id="roleSelect" ts-selected="{$list.typeid}" value="{$list.typeid}">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item" pane="">
+                        <label class="layui-form-label">目录显示</label>
+                        <div class="layui-input-block">
+                            {if ( $list.is_menu == 1) }
+                            <input type="radio" name="is_menu" value="1" title="隐藏" checked="">
+                            <input type="radio" name="is_menu" value="2" title="显示">
+                            {else /}
+                            <input type="radio" name="is_menu" value="1" title="隐藏">
+                            <input type="radio" name="is_menu" value="2" title="显示" checked="">
+                            {/if}
+                        </div>
+                    </div>
+                    <br>
+                    <div class="layui-form-item form-btn">
+                        <button class="layui-btn" lay-submit lay-filter="putBtn">立即提交</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{include file="inc/script" /}
+<script src="__PUBLIC__/assets/md5/md5.min.js"></script>
+<script>
+    layui.use(['form', 'tableSelect', 'ajax'], function () {
+        var $ = layui.$,
+            form = layui.form,
+            common = layui.ajax,
+            tableSelect = layui.tableSelect;
+        var ctx = '/{$Request.module}/{$Request.controller}/';
+
+        tableSelect.render({
+            elem: '#roleSelect',	//定义输入框input对象
+            checkedKey: 'id', //表格的唯一建值，非常重要，影响到选中状态 必填
+            searchKey: 'node_name',	//搜索输入框的name值 默认keyword
+            searchPlaceholder: '关键词搜索',	//搜索输入框的提示文字 默认关键词搜索
+            table: {	//定义表格参数，与LAYUI的TABLE模块一致，只是无需再定义表格elem
+                url: ctx + 'listall',
+                where: {currPage: 'create'},// 标记源调用页面，后台接口识别需要
+                cols: [[
+                    {type: 'radio', fixed: 'left'}
+                    , {field: 'node_name', title: '功能名称', align: 'center'}
+                    , {field: 'control_name', title: '控制器名称', align: 'center'}
+                ]]
+            },
+            done: function (elem, data) {
+                var arr = [],
+                    str = [];
+                layui.each(data.data, function (index, item) {
+                    arr.push(item.node_name);
+                    str.push(item.id);
+                });
+
+                if(arr.join(",")){
+                    elem.val(arr.join(","));
+                }else {
+                    elem.val('根节点');
+                }
+                if(str.join(",")){
+                    $('#typeId').val(str.join(","));
+                }else {
+                    $('#typeId').val(0);
+                }
+            }
+        });
+
+        //监听提交
+        form.on('submit(putBtn)', function (data) {
+            // layer.msg(JSON.stringify(data.field));
+            common.ajax({
+                url: ctx + "save",
+                type: "POST",
+                dataType: "json",
+                data: data.field,
+                success: function (res) {
+                    if (res.code === 0) {
+                        layer.msg(res.msg);
+                        setTimeout(function () {
+                            history.go(0);
+                        }, 1500);
+                    } else {
+                        layer.msg(res.msg);
+                    }
+                }
+            });
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    {include file="inc/header" /}
+    <link rel="stylesheet" href="__PUBLIC__/admin/js/modules/eleTree.css">
+    <style>
+        html, body {
+            background-color: #ffffff;
+        }
+
+        .eleTree-node {
+            margin-bottom: -1px;
+            border-radius: 0;
+            border: 1px solid #e6e6e6;
+        }
+
+        .eleTree-node-content {
+            background-color: #fbfbfb;
+            border-bottom: 1px solid #e6e6e6;
+            padding: 5px 15px;
+        }
+
+        .eleTree-node-group {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 8px 0;
+        }
+
+        .eleTree-node-group .eleTree-node {
+            margin: 0;
+            border-radius: unset;
+            border: none;
+        }
+
+        .eleTree-node-group .eleTree-node-content {
+            background-color: unset;
+            border-bottom: none;
+            padding: 2px 0;
+        }
+
+        .eleTree-node-group .eleTree-node-group {
+            display: flex;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-layout-admin">
+
+    <div class="layui-fluid">
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md15">
+                <br>
+                <form class="layui-form layui-form-pane" action="">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">角色名称</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="rolename" placeholder="请输入角色名称" autocomplete="off"
+                                   class="layui-input">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">权限选择</label>
+                        <div class="layui-input-block">
+                            <div class="eleTree ele1" lay-filter="treeData"></div>
+
+                        </div>
+                    </div>
+                    <br>
+                    <div class="layui-form-item form-btn">
+                        <button class="layui-btn" lay-submit lay-filter="putBtn">立即提交</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{include file="inc/script" /}
+<script>
+    layui.use(['form', 'tableSelect', 'eleTree', 'ajax'], function () {
+        var form = layui.form,
+            common = layui.ajax,
+            eleTree = layui.eleTree;
+        var ctx = '/{$Request.module}/{$Request.controller}/';
+
+        var el = eleTree.render({
+            elem: '.ele1',
+            url: ctx + "listrole",
+            where: {page: 1, limit: 0},
+            request: {
+                name: "node_name",
+                key: "id",
+                children: "child"
+            },
+            // defaultCheckedKeys: [21,22],
+            showCheckbox: true,
+            defaultExpandAll: true
+        });
+
+        //监听提交
+        form.on('submit(putBtn)', function (data) {
+            //所有选中的节点 包含父子级
+            var arr = [];
+            layui.each(el.getChecked(false, true), function (index, item) {
+                arr.push(item.id);
+            });
+            //所有选中的节点 只含子级
+            var arrChild = [];
+            layui.each(el.getChecked(false, false), function (index, item) {
+                arrChild.push(item.id);
+            });
+            common.ajax({
+                url: ctx + "save",
+                type: "POST",
+                dataType: "json",
+                data: {rolename: data.field.rolename, rule: arr.join(","), rule_children: arrChild.join(",")},
+                success: function (res) {
+                    if (res.code === 0) {
+                        layer.msg(res.msg);
+                        setTimeout(function () {
+                            history.go(0);
+                        }, 1500);
+                    } else {
+                        layer.msg(res.msg);
+                    }
+                }
+            });
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

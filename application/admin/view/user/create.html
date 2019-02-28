@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    {include file="inc/header" /}
+    <style>
+        html, body {
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-layout-admin">
+
+    <div class="layui-fluid">
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md15">
+                <br>
+                <form class="layui-form layui-form-pane" action="">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">姓名</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="real_name" placeholder="请输入姓名" autocomplete="off"
+                                   class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">账号</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="username" placeholder="请输入账号" autocomplete="off"
+                                   class="layui-input">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">密码</label>
+                        <div class="layui-input-block">
+                            <input type="password" name="password" placeholder="请输入密码" autocomplete="off"
+                                   class="layui-input">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">角色</label>
+                        <div class="layui-input-block">
+                            <input type="hidden" name="role_id" class="layui-input" id="roleId">
+                            <input type="text" placeholder="请选择角色" autocomplete="off" class="layui-input"
+                                   id="roleSelect" ts-selected="">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item" pane="">
+                        <label class="layui-form-label">状态</label>
+                        <div class="layui-input-block">
+                            <input type="radio" name="status" value="1" title="启用" checked="">
+                            <input type="radio" name="status" value="-1" title="停用">
+                        </div>
+                    </div>
+                    <br>
+                    <div class="layui-form-item form-btn">
+                        <button class="layui-btn" lay-submit lay-filter="putBtn">立即提交</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{include file="inc/script" /}
+<script src="__PUBLIC__/assets/md5/md5.min.js"></script>
+<script>
+    layui.use(['form', 'tableSelect', 'ajax'], function () {
+        var $ = layui.$,
+            form = layui.form,
+            common = layui.ajax,
+            tableSelect = layui.tableSelect;
+        var ctx = '/{$Request.module}/{$Request.controller}/';
+
+        tableSelect.render({
+            elem: '#roleSelect',	//定义输入框input对象
+            checkedKey: 'id', //表格的唯一建值，非常重要，影响到选中状态 必填
+            searchKey: 'rolename',	//搜索输入框的name值 默认keyword
+            searchPlaceholder: '关键词搜索',	//搜索输入框的提示文字 默认关键词搜索
+            table: {	//定义表格参数，与LAYUI的TABLE模块一致，只是无需再定义表格elem
+                url: '/admin/role/getall',
+                cols: [[
+                    {type: 'checkbox', fixed: 'left'}
+                    , {field: 'sn', title: 'SN'}
+                    , {field: 'rolename', title: '角色名', align: 'center'}
+                ]]
+            },
+            done: function (elem, data) {
+                var arr = [],
+                    str = [];
+                layui.each(data.data, function (index, item) {
+                    arr.push(item.rolename)
+                    str.push(item.id)
+                })
+                elem.val(arr.join(","))
+                $('#roleId').val(str.join(","))
+            }
+        })
+
+        //监听提交
+        form.on('submit(putBtn)', function (data) {
+            // layer.msg(JSON.stringify(data.field));
+            common.ajax({
+                url: ctx + "save",
+                type: "POST",
+                dataType: "json",
+                data: data.field,
+                success: function (res) {
+                    if (res.code === 0) {
+                        layer.msg(res.msg);
+                        setTimeout(function(){ history.go(0); }, 1500);
+                    } else {
+                        layer.msg(res.msg);
+                    }
+                }
+            });
+            return false;
+        });
+    });
+</script>
+</body>
+</html>
